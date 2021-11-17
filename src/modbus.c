@@ -811,7 +811,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
                 rsp_length = req_length;
 
                 if(mb_mapping->coils_written)
-                    mb_mapping->coils_written(address, 1);
+                    mb_mapping->coils_written(address, 1, mb_mapping->context);
 
             } else {
                 rsp_length = response_exception(
@@ -840,7 +840,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             rsp_length = req_length;
 
             if(mb_mapping->registers_written)
-                mb_mapping->registers_written(address, 1);
+                mb_mapping->registers_written(address, 1, mb_mapping->context);
         }
     }
         break;
@@ -875,7 +875,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             rsp_length += 4;
 
             if(mb_mapping->coils_written)
-                mb_mapping->coils_written(address, nb_bits);
+                mb_mapping->coils_written(address, nb_bits, mb_mapping->context);
         }
     }
         break;
@@ -909,7 +909,7 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             rsp_length += 4;
 
             if(mb_mapping->registers_written)
-                mb_mapping->registers_written(address, nb_bytes);
+                mb_mapping->registers_written(address, nb_bytes, mb_mapping->context);
         }
     }
         break;
@@ -1783,10 +1783,11 @@ int modbus_set_debug(modbus_t *ctx, int flag)
 modbus_mapping_t* modbus_mapping_new_start_address_ex(
                                                    unsigned int start_bits, unsigned int nb_bits,
                                                    unsigned int start_input_bits, unsigned int nb_input_bits,
-                                                   void (*coils_written)(int start, int count),
+                                                   void (*coils_written)(int start, int count, void* ctx),
                                                    unsigned int start_registers, unsigned int nb_registers,
                                                    unsigned int start_input_registers, unsigned int nb_input_registers,
-                                                   void (*registers_written)(int start, int count))
+                                                   void (*registers_written)(int start, int count, void* ctx),
+                                                      void* context)
 {
     modbus_mapping_t* mapping = modbus_mapping_new_start_address(start_bits, nb_bits,
                                                                  start_input_bits, nb_input_bits,
@@ -1795,6 +1796,7 @@ modbus_mapping_t* modbus_mapping_new_start_address_ex(
 
     mapping->coils_written = coils_written;
     mapping->registers_written = registers_written;
+    mapping->context = context;
 
     return mapping;
 }

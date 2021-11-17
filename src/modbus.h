@@ -167,8 +167,9 @@ typedef struct _modbus_mapping_t {
     uint8_t *tab_input_bits;
     uint16_t *tab_input_registers;
     uint16_t *tab_registers;
-    void (*coils_written)(int start, int count);
-    void (*registers_written)(int start, int count);
+    void (*coils_written)(int start, int count, void* ctx);
+    void (*registers_written)(int start, int count, void* ctx);
+    void *context;
 } modbus_mapping_t;
 
 typedef enum
@@ -221,9 +222,10 @@ MODBUS_API int modbus_report_slave_id(modbus_t *ctx, int max_dest, uint8_t *dest
 
 MODBUS_API modbus_mapping_t* modbus_mapping_new_start_address_ex(
                                           unsigned int start_bits, unsigned int nb_bits,
-                                          unsigned int start_input_bits, unsigned int nb_input_bits, void (*coils_written)(int start, int count),
+                                          unsigned int start_input_bits, unsigned int nb_input_bits, void (*coils_written)(int start, int count, void* ctx),
                                           unsigned int start_registers, unsigned int nb_registers,
-                                          unsigned int start_input_registers, unsigned int nb_input_registers, void (*registers_written)(int start, int count));
+                                          unsigned int start_input_registers, unsigned int nb_input_registers, void (*registers_written)(int start, int count, void* ctx),
+                                          void* context);
 
 
 MODBUS_API modbus_mapping_t* modbus_mapping_new_start_address(
