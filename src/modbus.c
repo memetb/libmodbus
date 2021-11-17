@@ -809,6 +809,10 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
                 mb_mapping->tab_bits[mapping_address] = data ? ON : OFF;
                 memcpy(rsp, req, req_length);
                 rsp_length = req_length;
+
+                if(mb_mapping->coils_written)
+                    mb_mapping->coils_written(address, 1);
+
             } else {
                 rsp_length = response_exception(
                     ctx, &sft,
@@ -834,6 +838,9 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             mb_mapping->tab_registers[mapping_address] = data;
             memcpy(rsp, req, req_length);
             rsp_length = req_length;
+
+            if(mb_mapping->registers_written)
+                mb_mapping->registers_written(address, 1);
         }
     }
         break;
@@ -866,6 +873,9 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             /* 4 to copy the bit address (2) and the quantity of bits */
             memcpy(rsp + rsp_length, req + rsp_length, 4);
             rsp_length += 4;
+
+            if(mb_mapping->coils_written)
+                mb_mapping->coils_written(address, nb_bits);
         }
     }
         break;
@@ -897,6 +907,9 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
             /* 4 to copy the address (2) and the no. of registers */
             memcpy(rsp + rsp_length, req + rsp_length, 4);
             rsp_length += 4;
+
+            if(mb_mapping->registers_written)
+                mb_mapping->registers_written(address, nb_bytes);
         }
     }
         break;
@@ -1766,6 +1779,26 @@ int modbus_set_debug(modbus_t *ctx, int flag)
    The modbus_mapping_new_start_address() function shall return the new allocated
    structure if successful. Otherwise it shall return NULL and set errno to
    ENOMEM. */
+
+modbus_mapping_t* modbus_mapping_new_start_address_ex(
+                                                   unsigned int start_bits, unsigned int nb_bits,
+                                                   unsigned int start_input_bits, unsigned int nb_input_bits,
+                                                   void (*coils_written)(int start, int count),
+                                                   unsigned int start_registers, unsigned int nb_registers,
+                                                   unsigned int start_input_registers, unsigned int nb_input_registers,
+                                                   void (*registers_written)(int start, int count))
+{
+    modbus_mapping_t* mapping = modbus_mapping_new_start_address(start_bits, nb_bits,
+                                                                 start_input_bits, nb_input_bits,
+                                                                 start_registers, nb_registers,
+                                                                 start_input_registers, nb_input_registers);
+
+    mapping->coils_written = coils_written;
+    mapping->registers_written = registers_written;
+
+    return mapping;
+}
+
 modbus_mapping_t* modbus_mapping_new_start_address(
     unsigned int start_bits, unsigned int nb_bits,
     unsigned int start_input_bits, unsigned int nb_input_bits,
